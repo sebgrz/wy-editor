@@ -4,7 +4,7 @@ interface LineProps {
 }
 
 const Line: React.FC<LineProps> = (props) => {
-  return <div>{props.text}</div>
+  return <div data-testid="wy-editor-line-element" >{props.text}</div>
 }
 
 export default Line;

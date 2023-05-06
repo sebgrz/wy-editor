@@ -185,7 +185,7 @@ const Editor: React.FC<{}> = () => {
     return lines.map((l, i) => <Line key={i} {...l} />);
   }
 
-  return <div style={{ border: "1px solid black", width: "400px", height: "300px" }} tabIndex={-1} onKeyDown={handleKeyDown}>
+  return <div data-testid="wy-editor-element" style={{ border: "1px solid black", width: "400px", height: "300px" }} tabIndex={-1} onKeyDown={handleKeyDown}>
     {renderLines()}
   </div>
 }
