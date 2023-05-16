@@ -1,22 +1,6 @@
 import { useEffect, useState } from "react";
 import Line from "./Line";
 
-
-declare global {
-  interface String {
-    insert(position: number, str: string): string;
-    remove(position: number): string
-  }
-}
-
-String.prototype.insert = function(position: number, str: string) {
-  return (position > 0) ? this.substring(0, position) + str + this.substring(position) : str + this;
-};
-
-String.prototype.remove = function(position: number) {
-  return (position > 0) ? this.substring(0, position - 1) + this.substring(position) : this + "";
-};
-
 type LineType = { cursorPosition: number, text: string }
 
 const createEmptyLine = (): LineType => {
