@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Line from "./Line";
+import FormattingController, { FormattingEvent } from "./controllers/FormattingController";
 
 enum ModifierType {
   START_BOLD,
@@ -18,7 +19,11 @@ const createLine = (position: number, text: string): LineData => {
   return { cursorPosition: position, text, modifiers: new Map() };
 }
 
-const Editor: React.FC<{}> = () => {
+export type EditorProps = {
+  formattingController?: FormattingController
+}
+
+const Editor: React.FC<EditorProps> = (props) => {
   // TODO: both bottoms to merge into one state
   const [lines, setLines] = useState<LineData[]>([createEmptyLine()])
   const [currentLine, setCurrentLine] = useState(0);
@@ -31,6 +36,15 @@ const Editor: React.FC<{}> = () => {
   useEffect(() => {
     console.info(`globalCursorPosition: ${globalCursorPosition}`);
   }, [globalCursorPosition]);
+
+  useEffect(() => {
+    props.formattingController?.eventEmitter.on(FormattingController.EE_TYPE, formattingEventsReceiver);
+  }, [props.formattingController]);
+
+  const formattingEventsReceiver = (event: FormattingEvent) => {
+    // TODO: to implementation
+    console.info(event);
+  }
 
   // TODO: refactor this
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
