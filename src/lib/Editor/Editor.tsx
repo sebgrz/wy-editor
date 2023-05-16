@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
 import Line from "./Line";
 
-type LineType = { cursorPosition: number, text: string }
-
-const createEmptyLine = (): LineType => {
-  return { cursorPosition: 0, text: "" };
+enum ModifierType {
+  START_BOLD,
+  END_BOLD
 }
 
-const createLine = (position: number, text: string): LineType => {
-  return { cursorPosition: position, text };
+type Modifier = { position: number }
+
+type LineData = { cursorPosition: number, text: string, modifiers: Map<ModifierType, Modifier> }
+
+const createEmptyLine = (): LineData => {
+  return { cursorPosition: 0, text: "", modifiers: new Map() };
+}
+
+const createLine = (position: number, text: string): LineData => {
+  return { cursorPosition: position, text, modifiers: new Map() };
 }
 
 const Editor: React.FC<{}> = () => {
   // TODO: both bottoms to merge into one state
-  const [lines, setLines] = useState<LineType[]>([createEmptyLine()])
+  const [lines, setLines] = useState<LineData[]>([createEmptyLine()])
   const [currentLine, setCurrentLine] = useState(0);
   const [globalCursorPosition, setGlobalCursorPosition] = useState(0);
 
