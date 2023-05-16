@@ -1,35 +1,27 @@
 import { useEffect, useState } from "react";
 import Line from "./Line";
+import FormattingController, { FormattingEvent } from "./controllers/FormattingController";
+import { Modifier } from ".";
+import { convertTextIntoFragments, createModifiers, mergeModifiers } from "./operations/modifiersOperations";
 
+type LineData = { cursorPosition: number, text: string, modifiers: Modifier[] }
 
-declare global {
-  interface String {
-    insert(position: number, str: string): string;
-    remove(position: number): string
-  }
+const createEmptyLine = (): LineData => {
+  return { cursorPosition: 0, text: "", modifiers: [] };
 }
 
-String.prototype.insert = function(position: number, str: string) {
-  return (position > 0) ? this.substring(0, position) + str + this.substring(position) : str + this;
-};
-
-String.prototype.remove = function(position: number) {
-  return (position > 0) ? this.substring(0, position - 1) + this.substring(position) : this + "";
-};
-
-type LineType = { cursorPosition: number, text: string }
-
-const createEmptyLine = (): LineType => {
-  return { cursorPosition: 0, text: "" };
+const createLine = (position: number, text: string, modifiers: Modifier[] | undefined = undefined): LineData => {
+  const m = modifiers ? modifiers : [];
+  return { cursorPosition: position, text, modifiers: m };
 }
 
-const createLine = (position: number, text: string): LineType => {
-  return { cursorPosition: position, text };
+export type EditorProps = {
+  formattingController?: FormattingController
 }
 
-const Editor: React.FC<{}> = () => {
+const Editor: React.FC<EditorProps> = (props) => {
   // TODO: both bottoms to merge into one state
-  const [lines, setLines] = useState<LineType[]>([createEmptyLine()])
+  const [lines, setLines] = useState<LineData[]>([createEmptyLine()]);
   const [currentLine, setCurrentLine] = useState(0);
   const [globalCursorPosition, setGlobalCursorPosition] = useState(0);
 
@@ -41,8 +33,19 @@ const Editor: React.FC<{}> = () => {
     console.info(`globalCursorPosition: ${globalCursorPosition}`);
   }, [globalCursorPosition]);
 
+  useEffect(() => {
+    props.formattingController?.eventEmitter.on(FormattingController.EE_TYPE, formattingEventsReceiver);
+  }, [props.formattingController]);
+
+  const formattingEventsReceiver = (event: FormattingEvent) => {
+    console.info(`l: ${currentLine} p: ${globalCursorPosition} e: ${event}`);
+    // TODO: check here isSelection
+  }
+
   // TODO: refactor this
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    let updatedLines: LineData[] = [];
+    let updatedCurrentLine = 0;
     switch (event.code) {
       case "Enter":
         let { cursorPosition, text } = lines[currentLine];
@@ -51,17 +54,17 @@ const Editor: React.FC<{}> = () => {
         let positionForNewLine = 0;
         lines[currentLine] = createLine(cursorPosition, textForCurrentLine);
 
-        let updatedLines = [
+        updatedLines = [
           ...lines.slice(0, currentLine + 1),
           createLine(positionForNewLine, textForNewLine),
           ...lines.slice(currentLine + 1)
         ];
-        setCurrentLine(currentLine + 1);
-        setLines(updatedLines);
+        updatedCurrentLine = currentLine + 1;
         setGlobalCursorPosition(positionForNewLine);
         break;
       case "ArrowUp": {
         let text = lines[currentLine].text;
+        updatedCurrentLine = currentLine;
         if (currentLine > 0) {
           let lineAbove = lines[currentLine - 1];
           if (globalCursorPosition > lineAbove.text.length) {
@@ -69,16 +72,16 @@ const Editor: React.FC<{}> = () => {
           } else {
             lines[currentLine - 1] = createLine(globalCursorPosition, lineAbove.text);
           }
-          setCurrentLine(currentLine - 1);
-          setLines([...lines]);
+          updatedCurrentLine = currentLine - 1;
         } else { // as a first line, move curosor to the first postion
           lines[currentLine] = createLine(0, text);
-          setLines([...lines]);
         }
+        updatedLines = [...lines];
         break;
       }
       case "ArrowDown": {
         let text = lines[currentLine].text;
+        updatedCurrentLine = currentLine;
         if (currentLine < lines.length - 1) {
           let lineBelow = lines[currentLine + 1];
           if (globalCursorPosition > lineBelow.text.length) {
@@ -86,23 +89,22 @@ const Editor: React.FC<{}> = () => {
           } else {
             lines[currentLine + 1] = createLine(globalCursorPosition, lineBelow.text);
           }
-          setCurrentLine(currentLine + 1);
-          setLines([...lines]);
+          updatedCurrentLine = currentLine + 1;
         } else {
           lines[currentLine] = createLine(text.length, text);
-          setLines([...lines]);
         }
+        updatedLines = [...lines];
         break;
       }
       case "ArrowRight": {
         let { cursorPosition, text } = lines[currentLine];
+        updatedCurrentLine = currentLine;
         let newPosition = cursorPosition + 1;
         if (newPosition > text.length && currentLine < lines.length - 1) {
           let text = lines[currentLine + 1].text;
           let newPosition = 0;
           lines[currentLine + 1] = createLine(newPosition, text);
-          setLines([...lines]);
-          setCurrentLine(currentLine + 1);
+          updatedCurrentLine = currentLine + 1;
           setGlobalCursorPosition(newPosition);
         } else {
           newPosition = (() => {
@@ -114,20 +116,20 @@ const Editor: React.FC<{}> = () => {
             }
           })()
           lines[currentLine] = createLine(newPosition, text);
-          setLines([...lines]);
         }
 
+        updatedLines = [...lines];
         break;
       }
       case "ArrowLeft": {
         let { cursorPosition, text } = lines[currentLine];
+        updatedCurrentLine = currentLine;
         let newPosition = cursorPosition - 1;
         if (newPosition < 0 && currentLine > 0) {
           let text = lines[currentLine - 1].text;
           let newPosition = text.length;
           lines[currentLine - 1] = createLine(newPosition, text);
-          setLines([...lines]);
-          setCurrentLine(currentLine - 1);
+          updatedCurrentLine = currentLine - 1;
           setGlobalCursorPosition(newPosition);
         } else {
           newPosition = (() => {
@@ -139,12 +141,13 @@ const Editor: React.FC<{}> = () => {
             }
           })()
           lines[currentLine] = createLine(newPosition, text);
-          setLines([...lines]);
         }
+        updatedLines = [...lines];
         break;
       }
       case "Backspace": {
         let { cursorPosition, text } = lines[currentLine];
+        updatedCurrentLine = currentLine;
 
         let newPosition = cursorPosition - 1;
         if (newPosition < 0 && currentLine > 0) {
@@ -152,37 +155,53 @@ const Editor: React.FC<{}> = () => {
           let newPosition = otherLine.text.length;
           let newText = otherLine.text + text;
           lines[currentLine - 1] = createLine(newPosition, newText);
-          let updatedLines = [
+          updatedLines = [
             ...lines.slice(0, currentLine),
             ...lines.slice(currentLine + 1)
           ]
-          setLines(updatedLines);
-          setCurrentLine(currentLine - 1);
+          updatedCurrentLine = currentLine - 1;
           setGlobalCursorPosition(newPosition);
         } else {
           newPosition = newPosition < 0 ? 0 : newPosition;
           let newText = text.remove(cursorPosition);
 
           lines[currentLine] = createLine(newPosition, newText);
-          setLines([...lines]);
+          updatedLines = [...lines];
           setGlobalCursorPosition(newPosition);
         }
         break;
       }
       default: {
         let char = event.key;
-        let { cursorPosition, text } = lines[currentLine];
+        let { cursorPosition, text, modifiers } = lines[currentLine];
+        updatedCurrentLine = currentLine;
         let newPosition = cursorPosition + 1;
-        lines[currentLine] = createLine(newPosition, text.insert(cursorPosition, char));
-        setLines([...lines]);
+        lines[currentLine] = createLine(newPosition, text.insert(cursorPosition, char), modifiers);
         setGlobalCursorPosition(newPosition);
+        updatedLines = [...lines];
         break;
       }
     }
+    // TODO:`createLine - add modifiers parameter everywhere
+
+    // Modifiers pipeline
+    const line = updatedLines[updatedCurrentLine]
+    const lineModifiers = line.modifiers;
+    const newModifiers = createModifiers(props.formattingController?.state, globalCursorPosition);
+    console.debug("State: " + JSON.stringify(props.formattingController?.state));
+    console.debug("New modifiers: " + JSON.stringify(newModifiers));
+    const modifiers = mergeModifiers(lineModifiers, newModifiers);
+    console.debug("Line modifiers: \n" + JSON.stringify(lineModifiers) + "\nMerged modifiers: \n" + JSON.stringify(modifiers));
+    
+    updatedLines[updatedCurrentLine] = { ...line, modifiers: modifiers };
+
+    setLines(updatedLines);
+    setCurrentLine(updatedCurrentLine);
   }
 
   const renderLines = () => {
-    return lines.map((l, i) => <Line key={i} {...l} />);
+    // TODO(optimize): `convertTextIntoFragments` to optimize - process only modified line
+    return lines.map((l, i) => <Line key={i} {...l} fragmentModifiers={convertTextIntoFragments(l.text, l.modifiers)} />);
   }
 
   return <div data-testid="wy-editor-element" style={{ border: "1px solid black", width: "400px", height: "300px" }} tabIndex={-1} onKeyDown={handleKeyDown}>
