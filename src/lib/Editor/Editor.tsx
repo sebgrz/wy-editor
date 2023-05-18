@@ -1,22 +1,16 @@
 import { useEffect, useState } from "react";
 import Line from "./Line";
 import FormattingController, { FormattingEvent } from "./controllers/FormattingController";
+import useModifiers from "./hooks/useModifiers";
 
-enum ModifierType {
-  START_BOLD,
-  END_BOLD
-}
-
-type Modifier = { position: number }
-
-type LineData = { cursorPosition: number, text: string, modifiers: Map<ModifierType, Modifier> }
+type LineData = { cursorPosition: number, text: string }
 
 const createEmptyLine = (): LineData => {
-  return { cursorPosition: 0, text: "", modifiers: new Map() };
+  return { cursorPosition: 0, text: "" };
 }
 
 const createLine = (position: number, text: string): LineData => {
-  return { cursorPosition: position, text, modifiers: new Map() };
+  return { cursorPosition: position, text };
 }
 
 export type EditorProps = {
@@ -25,9 +19,10 @@ export type EditorProps = {
 
 const Editor: React.FC<EditorProps> = (props) => {
   // TODO: both bottoms to merge into one state
-  const [lines, setLines] = useState<LineData[]>([createEmptyLine()])
+  const [lines, setLines] = useState<LineData[]>([createEmptyLine()]);
   const [currentLine, setCurrentLine] = useState(0);
   const [globalCursorPosition, setGlobalCursorPosition] = useState(0);
+  const [modifierAction, _ ,lineModifiers] = useModifiers();
 
   useEffect(() => {
     console.info(JSON.stringify(lines));
@@ -42,8 +37,9 @@ const Editor: React.FC<EditorProps> = (props) => {
   }, [props.formattingController]);
 
   const formattingEventsReceiver = (event: FormattingEvent) => {
-    // TODO: to implementation
-    console.info(event);
+    console.info(`l: ${currentLine} p: ${globalCursorPosition} e: ${event}`);
+    // TODO: check here isSelection
+    modifierAction(currentLine, globalCursorPosition, event);
   }
 
   // TODO: refactor this
@@ -187,7 +183,7 @@ const Editor: React.FC<EditorProps> = (props) => {
   }
 
   const renderLines = () => {
-    return lines.map((l, i) => <Line key={i} {...l} />);
+    return lines.map((l, i) => <Line key={i} modifiers={lineModifiers(i)} {...l} />);
   }
 
   return <div data-testid="wy-editor-element" style={{ border: "1px solid black", width: "400px", height: "300px" }} tabIndex={-1} onKeyDown={handleKeyDown}>

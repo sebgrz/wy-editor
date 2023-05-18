@@ -1,6 +1,9 @@
+import { Modifier } from ".";
+
 interface LineProps {
   cursorPosition: number;
   text: string;
+  modifiers: Modifier[];
 }
 
 const Line: React.FC<LineProps> = (props) => {
