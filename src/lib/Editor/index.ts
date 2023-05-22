@@ -16,9 +16,8 @@ String.prototype.remove = function(position: number) {
 };
 
 export enum ModifierType {
-  START_BOLD,
-  END_BOLD
+  BOLD
 }
 
-export type Modifier = { position: number, type: ModifierType };
+export type Modifier = { offset: number, length: number, type: ModifierType };
 export type CursorPosition = { line: number, position: number }; 
