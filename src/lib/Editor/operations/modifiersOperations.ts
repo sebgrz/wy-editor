@@ -7,10 +7,16 @@ export const createModifiers = (formattingState?: FormattingState, position: num
   }
 
   let modifiers: Modifier[] = [];
-  let { bold } = formattingState;
+  let { bold, italics, underline } = formattingState;
 
   bold && (
     modifiers.push({ offset: position, length: 1, type: ModifierType.BOLD })
+  );
+  italics && (
+    modifiers.push({ offset: position, length: 1, type: ModifierType.ITALICS })
+  );
+  underline && (
+    modifiers.push({ offset: position, length: 1, type: ModifierType.UNDERLINE })
   );
 
   return modifiers;

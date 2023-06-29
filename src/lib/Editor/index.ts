@@ -16,7 +16,9 @@ String.prototype.remove = function(position: number) {
 };
 
 export enum ModifierType {
-  BOLD
+  BOLD,
+  ITALICS,
+  UNDERLINE
 }
 
 export type Modifier = { offset: number, length: number, type: ModifierType };

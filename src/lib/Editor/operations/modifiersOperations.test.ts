@@ -7,7 +7,9 @@ describe("create modifiers", () => {
     // given
     const position = 5;
     const state: FormattingState = {
-      bold: true
+      bold: true,
+      italics: false,
+      underline: false
     }
 
     // when
@@ -16,11 +18,33 @@ describe("create modifiers", () => {
     // then
     expect(modifiers).toEqual([{ offset: 5, length: 1, type: ModifierType.BOLD }]);
   });
+
+  test("should create both BOLD and UNDERLINE modifiers if state has active bold and underline", () => {
+    // given
+    const position = 5;
+    const state: FormattingState = {
+      bold: true,
+      italics: false,
+      underline: true
+    }
+
+    // when
+    const modifiers = createModifiers(state, position);
+
+    // then
+    expect(modifiers).toEqual([
+      { offset: 5, length: 1, type: ModifierType.BOLD },
+      { offset: 5, length: 1, type: ModifierType.UNDERLINE }
+    ]);
+  });
+
   test("should not create BOLD modifier if state bold is not active", () => {
     // given
     const position = 5;
     const state: FormattingState = {
-      bold: false
+      bold: false,
+      italics: false,
+      underline: false
     }
 
     // when

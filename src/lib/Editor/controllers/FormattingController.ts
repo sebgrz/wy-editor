@@ -3,6 +3,8 @@ import { ModifierType } from "..";
 
 export enum FormattingEventType {
   BOLD,
+  ITALICS,
+  UNDERLINE,
   NONE
 }
 
@@ -10,19 +12,29 @@ export type FormattingEvent = { type: FormattingEventType, isActive: boolean };
 
 export type FormattingControllerActions = {
   bold: () => void;
+  italics: () => void;
+  underline: () => void;
 }
 
 export type FormattingState = {
-  bold: boolean
+  bold: boolean,
+  italics: boolean,
+  underline: boolean
 }
 
-const defaultFormattingState: FormattingState = { bold: false };
+const defaultFormattingState: FormattingState = { 
+  bold: false,
+  italics: false,
+  underline: false
+};
 
 class FormattingController {
   public static readonly EE_TYPE = "formatting-event";
   public static readonly ST_TYPE = "state";
   private static _state: FormattingState = {
-    bold: false
+    bold: false,
+    italics: false,
+    underline: false
   };
 
   public set state(s: FormattingState) {
@@ -35,9 +47,7 @@ class FormattingController {
   }
 
   constructor(public eventEmitter: EventEmitter) {
-    FormattingController._state = {
-      bold: false
-    };
+    FormattingController._state = { ...defaultFormattingState };
   }
 
   updateState = (modifiers: ModifierType[]) => {
@@ -46,6 +56,13 @@ class FormattingController {
       switch (modifier) {
         case ModifierType.BOLD:
           newState = { ...newState, bold: true };
+          break;
+        case ModifierType.ITALICS:
+          newState = { ...newState, italics: true };
+          break;
+        case ModifierType.UNDERLINE:
+          newState = { ...newState, underline: true };
+          break;
       }
     }
 

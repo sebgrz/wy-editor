@@ -22,6 +22,26 @@ export const useFormattingController = (): FormattingControllerResult => {
         eventEmitter.emit(FormattingController.EE_TYPE, { type: FormattingEventType.BOLD, isActive: false } as FormattingEvent);
         controller.state = {...controller.state, bold: false }
       }
+    },
+
+    italics: () => {
+      if (!controller.state.italics) {
+        eventEmitter.emit(FormattingController.EE_TYPE, { type: FormattingEventType.ITALICS, isActive: true } as FormattingEvent);
+        controller.state = {...controller.state, italics: true }
+      } else {
+        eventEmitter.emit(FormattingController.EE_TYPE, { type: FormattingEventType.ITALICS, isActive: false } as FormattingEvent);
+        controller.state = {...controller.state, italics: false }
+      }
+    },
+
+    underline: () => {
+      if (!controller.state.underline) {
+        eventEmitter.emit(FormattingController.EE_TYPE, { type: FormattingEventType.UNDERLINE, isActive: true } as FormattingEvent);
+        controller.state = {...controller.state, underline: true }
+      } else {
+        eventEmitter.emit(FormattingController.EE_TYPE, { type: FormattingEventType.UNDERLINE, isActive: false } as FormattingEvent);
+        controller.state = {...controller.state, underline: false }
+      }
     }
   }
 
