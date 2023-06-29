@@ -341,4 +341,40 @@ describe("generate fragments base on line modifiers", () => {
     expect(fragments[3]).toEqual({ text: "ps", types: [ModifierType.BOLD] });
     expect(fragments[4]).toEqual({ text: "um", types: [] });
   });
-});
+
+  test("should generate four fragments with both BOLD and UNDERLINE modifiers", () => {
+    // given
+    const modifiers: Modifier[] = [
+      { type: ModifierType.BOLD, offset: 8, length: 3 },
+      { type: ModifierType.UNDERLINE, offset: 3, length: 2 },
+    ];
+
+    // when
+    const fragments = convertTextIntoFragments(text, modifiers);
+
+    // then
+    expect(fragments).toHaveLength(4);
+    expect(fragments[0]).toEqual({ text: "Lor", types: [] });
+    expect(fragments[1]).toEqual({ text: "em", types:  [ModifierType.UNDERLINE]});
+    expect(fragments[2]).toEqual({ text: " ip", types: [] });
+    expect(fragments[3]).toEqual({ text: "sum", types: [ModifierType.BOLD] });
+  });
+
+  test("should generate four fragments with both BOLD and UNDERLINE modifiers and one fragment has combined both of them", () => {
+    // given
+    const modifiers: Modifier[] = [
+      { type: ModifierType.BOLD, offset: 8, length: 3 },
+      { type: ModifierType.UNDERLINE, offset: 6, length: 3 },
+    ];
+
+    // when
+    const fragments = convertTextIntoFragments(text, modifiers);
+
+    // then
+    expect(fragments).toHaveLength(4);
+    expect(fragments[0]).toEqual({ text: "Lorem ", types: [] });
+    expect(fragments[1]).toEqual({ text: "ip", types: [ModifierType.UNDERLINE]});
+    expect(fragments[2]).toEqual({ text: "s", types: [ModifierType.BOLD, ModifierType.UNDERLINE] });
+    expect(fragments[3]).toEqual({ text: "um", types: [ModifierType.BOLD] });
+  });
+})
